@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: auth
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bookmyshow}
+    username: ${DB_USERNAME:catalog}
+    password: ${DB_PASSWORD:catalog}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+jwt:
+  private-key: ${JWT_PRIVATE_KEY:classpath:keys/auth-private.pem}
+  public-key: ${JWT_PUBLIC_KEY:classpath:keys/auth-public.pem}
+  # Spring binds these to java.time.Duration. Suffix shorthand: ns/us/ms/s/m/h/d.
+  access-token-expiry: 30m
+  refresh-token-expiry: 7d
+
+server:
+  port: 8083
+  servlet:
+    context-path: /auth/v1
+
+  error:
+    include-message: always

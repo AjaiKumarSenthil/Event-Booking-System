@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/auth/v1/**
+
+            - id: inventory-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/inventory/v1/**
+
+            - id: booking-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/booking/v1/**
+
+server:
+  port: 8080
+
+jwt:
+  public-key: classpath:keys/auth-public.pem
+
+gateway:
+  security:
+    forbidden-patterns:
+      - /*/v1/internal/**
+      - /*/v1/**/internal/**
+
+    public-paths:
+      - /auth/v1/auth/register
+      - /auth/v1/auth/login
+      - /auth/v1/auth/refresh
+
+    public-get-patterns:
+      - /auth/v1/swagger-ui/**
+      - /auth/v1/v3/api-docs/**
+      - /booking/v1/swagger-ui/**
+      - /booking/v1/v3/api-docs/**
+      - /inventory/v1/swagger-ui/**
+      - /inventory/v1/v3/api-docs/**
+      - /inventory/v1/cities/**
+      - /inventory/v1/languages/**
+      - /inventory/v1/formats/**
+      - /inventory/v1/movies/**
+      - /inventory/v1/theaters/**
+      - /inventory/v1/shows/**

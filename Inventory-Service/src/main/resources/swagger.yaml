@@ -1,0 +1,2220 @@
+openapi: 3.0.3
+info:
+  title: BookYourShow - Inventory API
+  description: REST APIs for managing inventory (movies, theatres, shows, seats) in BookYourShow Application
+  version: 1.0.0
+  contact:
+    name: bookYourShow Team
+    email: bookyourshow@company.com
+
+tags:
+  - name: Cities
+    description: City lookup and admin management
+  - name: Movies
+    description: Movie listing, details, showtimes, and admin management
+  - name: Shows
+    description: Show seat availability and admin management
+  - name: Theatres
+    description: Theatre listing and admin management (theatres, screens, seats)
+  - name: Languages
+    description: Language reference data and admin management
+  - name: Formats
+    description: Format reference data and admin management
+  - name: Internal
+    description: Internal APIs — not exposed publicly. Called by other services (e.g., booking service).
+
+servers:
+  - url: http://localhost:8080/inventory/v1
+    description: dev
+
+paths:
+
+  # ── Cities ──────────────────────────────────────────────
+
+  /cities:
+    get:
+      tags: [Cities]
+      summary: Get all cities
+      operationId: getCities
+      parameters: []
+      responses:
+        '200':
+          description: List of Cities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CityListResponse'
+        '500':
+          description: Internal server error
+    post:
+      tags: [Cities]
+      summary: Create a new city (admin)
+      operationId: createCity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCreateRequest'
+      responses:
+        '201':
+          description: City created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: City already exists
+
+  /cities/{id}:
+    put:
+      tags: [Cities]
+      summary: Update a city (admin)
+      operationId: updateCity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: City ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityUpdateRequest'
+      responses:
+        '200':
+          description: City updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: City not found
+    delete:
+      tags: [Cities]
+      summary: Delete a city (admin)
+      operationId: deleteCity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: City ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '204':
+          description: City deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: City not found
+        '409':
+          description: City still referenced by theatres
+
+  # ── Languages ───────────────────────────────────────────
+
+  /languages:
+    get:
+      tags: [Languages]
+      summary: Get all languages
+      operationId: getLanguages
+      responses:
+        '200':
+          description: List of languages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LanguageListResponse'
+        '500':
+          description: Internal server error
+    post:
+      tags: [Languages]
+      summary: Create a new language (admin)
+      operationId: createLanguage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LanguageCreateRequest'
+      responses:
+        '201':
+          description: Language created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Language'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Language already exists
+
+  /languages/{id}:
+    put:
+      tags: [Languages]
+      summary: Update a language (admin)
+      operationId: updateLanguage
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Language ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LanguageUpdateRequest'
+      responses:
+        '200':
+          description: Language updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Language'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Language not found
+    delete:
+      tags: [Languages]
+      summary: Delete a language (admin)
+      operationId: deleteLanguage
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Language ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '204':
+          description: Language deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Language not found
+        '409':
+          description: Language still referenced by movies
+
+  # ── Formats ─────────────────────────────────────────────
+
+  /formats:
+    get:
+      tags: [Formats]
+      summary: Get all formats
+      operationId: getFormats
+      responses:
+        '200':
+          description: List of formats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormatListResponse'
+        '500':
+          description: Internal server error
+    post:
+      tags: [Formats]
+      summary: Create a new format (admin)
+      operationId: createFormat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormatCreateRequest'
+      responses:
+        '201':
+          description: Format created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Format'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '409':
+          description: Format already exists
+
+  /formats/{id}:
+    put:
+      tags: [Formats]
+      summary: Update a format (admin)
+      operationId: updateFormat
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Format ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormatUpdateRequest'
+      responses:
+        '200':
+          description: Format updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Format'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Format not found
+    delete:
+      tags: [Formats]
+      summary: Delete a format (admin)
+      operationId: deleteFormat
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Format ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '204':
+          description: Format deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Format not found
+        '409':
+          description: Format still referenced by movies or screens
+
+  # ── Movies ──────────────────────────────────────────────
+
+  /movies:
+    get:
+      tags: [Movies]
+      summary: Get movies by city with optional filters
+      operationId: getMovies
+      parameters:
+        - in: query
+          name: cityId
+          required: true
+          description: City ID
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: langId
+          required: false
+          description: Filter movies by language
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of movies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieListResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+    post:
+      tags: [Movies]
+      summary: Create a new movie (admin)
+      operationId: createMovie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieCreateRequest'
+      responses:
+        '201':
+          description: Movie created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetails'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /movies/{movieId}:
+    get:
+      tags: [Movies]
+      summary: Get full details of a movie
+      operationId: getMovieDetails
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        - in: query
+          name: cityId
+          required: false
+          description: If provided, includes availability info for this city
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Movie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetails'
+        '404':
+          description: Movie not found
+        '500':
+          description: Internal server error
+    put:
+      tags: [Movies]
+      summary: Update a movie (admin)
+      operationId: updateMovie
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieUpdateRequest'
+      responses:
+        '200':
+          description: Movie updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetails'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Movie not found
+    delete:
+      tags: [Movies]
+      summary: Delete a movie (admin)
+      operationId: deleteMovie
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+      responses:
+        '204':
+          description: Movie deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Movie not found
+        '409':
+          description: Movie still has shows scheduled
+
+  /movies/{movieId}/language-formats:
+    post:
+      tags: [Movies]
+      summary: Add a language-format combination to a movie (admin)
+      operationId: addMovieLanguageFormat
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovieLanguageFormatCreateRequest'
+      responses:
+        '201':
+          description: Language-format added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieLanguageFormat'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Movie, language, or format not found
+        '409':
+          description: Language-format combination already exists for this movie
+
+  /movies/{movieId}/language-formats/{mlfId}:
+    delete:
+      tags: [Movies]
+      summary: Remove a language-format combination from a movie (admin)
+      operationId: removeMovieLanguageFormat
+      parameters:
+        - in: path
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        - in: path
+          name: mlfId
+          required: true
+          description: Unique movie-language-format ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+      responses:
+        '204':
+          description: Language-format removed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Movie or language-format not found
+        '409':
+          description: Language-format still has shows scheduled
+
+  # ── Shows ───────────────────────────────────────────────
+
+  /shows:
+    get:
+      tags: [Shows]
+      summary: Get shows for a movie grouped by theater
+      operationId: getMovieShows
+      parameters:
+        - in: query
+          name: movieId
+          required: true
+          description: Unique movie ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        - in: query
+          name: cityId
+          required: true
+          description: City ID to find shows in
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: langId
+          required: false
+          description: Selected language
+          schema:
+            type: integer
+          example: 1
+        - in: query
+          name: formatId
+          required: false
+          description: Selected format
+          schema:
+            type: integer
+          example: 2
+        - in: query
+          name: date
+          required: false
+          description: Date for shows. Defaults to today if not provided.
+          schema:
+            type: string
+            format: date
+          example: 2026-02-20
+      responses:
+        '200':
+          description: List of theaters with showtimes for the movie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieShowListResponse'
+        '400':
+          description: Invalid request
+        '404':
+          description: Movie not found
+        '500':
+          description: Internal server error
+    post:
+      tags: [Shows]
+      summary: Create a new show and auto-generate show seats (admin / theatre owner)
+      description: >
+        Creates a Show for the given movie-language-format and screen.
+        On success, server-side creates one ShowSeat (status=AVAILABLE) per
+        Seat of the chosen screen, in a single transaction.
+      operationId: createShow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowCreateRequest'
+      responses:
+        '201':
+          description: Show created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowResponse'
+        '400':
+          description: Invalid request (e.g., startTime in the past, missing fields)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Movie-language-format or screen not found
+        '409':
+          description: Screen has an overlapping show in that time range
+
+  /shows/{showId}:
+    put:
+      tags: [Shows]
+      summary: Update a show (admin / theatre owner)
+      description: Reschedule or re-price an existing show. Blocked if any seat is BOOKED.
+      operationId: updateShow
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          description: Unique show ID
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShowUpdateRequest'
+      responses:
+        '200':
+          description: Show updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Show not found
+        '409':
+          description: Show has booked seats or overlaps with another show
+    delete:
+      tags: [Shows]
+      summary: Delete a show (admin / theatre owner)
+      description: Deletes a show and its show-seat rows. Blocked if any seat is BOOKED.
+      operationId: deleteShow
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          description: Unique show ID
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      responses:
+        '204':
+          description: Show deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Show not found
+        '409':
+          description: Show has booked seats
+
+  /shows/{showId}/seats:
+    get:
+      tags: [Shows]
+      summary: Get seat layout and availability for a show
+      operationId: getShowSeats
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          description: Unique show ID
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      responses:
+        '200':
+          description: Seat layout with availability
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowSeats'
+        '404':
+          description: Show not found
+        '500':
+          description: Internal server error
+
+  /shows/theatre:
+    get:
+      tags: [Shows]
+      summary: Get all shows for a theatre grouped by movie and language-format
+      operationId: getTheatreShows
+      parameters:
+        - in: query
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        - in: query
+          name: date
+          required: false
+          description: Date for shows. Defaults to today if not provided.
+          schema:
+            type: string
+            format: date
+          example: 2026-03-01
+      responses:
+        '200':
+          description: Shows grouped by movie and language-format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TheatreShowsDetailResponse'
+        '404':
+          description: Theatre not found
+        '500':
+          description: Internal server error
+
+  # ── Internal ───────────────────────────────────────────
+
+  /internal/shows/{showId}/seats/lock:
+    post:
+      tags: [Internal]
+      summary: Lock seats for a show and return show details
+      description: >
+        Atomically verifies seat availability and marks them as BLOCKED.
+        Returns show snapshot data needed by the booking service.
+      operationId: lockSeats
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeatLockRequest'
+      responses:
+        '200':
+          description: Seats locked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatLockResponse'
+        '404':
+          description: Show or seats not found
+        '409':
+          description: One or more seats are not available
+
+  /internal/shows/{showId}/seats/release:
+    post:
+      tags: [Internal]
+      summary: Release locked seats back to available
+      operationId: releaseSeats
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeatStatusUpdateRequest'
+      responses:
+        '200':
+          description: Seats released successfully
+
+  /internal/shows/{showId}/seats/confirm:
+    post:
+      tags: [Internal]
+      summary: Confirm locked seats as booked
+      operationId: confirmSeats
+      parameters:
+        - in: path
+          name: showId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeatStatusUpdateRequest'
+      responses:
+        '200':
+          description: Seats confirmed as booked
+
+  # ── Theatres ────────────────────────────────────────────
+
+  /theaters:
+    get:
+      tags: [Theatres]
+      summary: Get theatres by city
+      operationId: getTheatres
+      parameters:
+        - in: query
+          name: cityId
+          required: true
+          description: City ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: List of theaters in the city
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TheatreListResponse'
+        '400':
+          description: Invalid city
+        '500':
+          description: Internal server error
+    post:
+      tags: [Theatres]
+      summary: Create a new theatre (admin only)
+      operationId: createTheatre
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TheatreCreateRequest'
+      responses:
+        '201':
+          description: Theatre created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Theatre'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: City or owner not found
+
+  /theaters/{theatreId}:
+    put:
+      tags: [Theatres]
+      summary: Update a theatre (admin or theatre owner)
+      operationId: updateTheatre
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TheatreUpdateRequest'
+      responses:
+        '200':
+          description: Theatre updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Theatre'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre not found
+    delete:
+      tags: [Theatres]
+      summary: Delete a theatre (admin only)
+      operationId: deleteTheatre
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+      responses:
+        '204':
+          description: Theatre deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre not found
+        '409':
+          description: Theatre still has screens or shows
+
+  /theaters/{theatreId}/screens:
+    post:
+      tags: [Theatres]
+      summary: Create a new screen for a theatre (admin or theatre owner)
+      operationId: createScreen
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenCreateRequest'
+      responses:
+        '201':
+          description: Screen created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Screen'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre or format not found
+
+  /theaters/{theatreId}/screens/{screenId}:
+    put:
+      tags: [Theatres]
+      summary: Update a screen (admin or theatre owner)
+      operationId: updateScreen
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        - in: path
+          name: screenId
+          required: true
+          description: Unique screen ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenUpdateRequest'
+      responses:
+        '200':
+          description: Screen updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Screen'
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre or screen not found
+    delete:
+      tags: [Theatres]
+      summary: Delete a screen (admin or theatre owner)
+      operationId: deleteScreen
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        - in: path
+          name: screenId
+          required: true
+          description: Unique screen ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+      responses:
+        '204':
+          description: Screen deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre or screen not found
+        '409':
+          description: Screen still has shows scheduled
+
+  /theaters/{theatreId}/screens/{screenId}/seats:bulk:
+    post:
+      tags: [Theatres]
+      summary: Bulk-create seats for a screen (admin or theatre owner)
+      description: >
+        Bulk creation since a single screen typically has ~150 seats.
+        Provide either `rows` (rowLabel + seatCount per row) for sequential
+        seat numbering, or `seats` (explicit rowLabel/seatNumber pairs).
+        Rejected if shows already exist for this screen.
+      operationId: bulkCreateSeats
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        - in: path
+          name: screenId
+          required: true
+          description: Unique screen ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeatBulkCreateRequest'
+      responses:
+        '201':
+          description: Seats created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeatListResponse'
+        '400':
+          description: Invalid request (must provide either rows or seats; not both empty)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre or screen not found
+        '409':
+          description: Screen already has shows scheduled or duplicate seats
+
+  /theaters/{theatreId}/screens/{screenId}/seats:
+    delete:
+      tags: [Theatres]
+      summary: Delete all seats for a screen (admin or theatre owner)
+      description: Clear seats so they can be re-seeded. Rejected if shows are scheduled.
+      operationId: deleteScreenSeats
+      parameters:
+        - in: path
+          name: theatreId
+          required: true
+          description: Unique theatre ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        - in: path
+          name: screenId
+          required: true
+          description: Unique screen ID
+          schema:
+            type: string
+            format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+      responses:
+        '204':
+          description: Seats deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Theatre or screen not found
+        '409':
+          description: Screen has shows scheduled
+
+components:
+  schemas:
+
+    # ── List Responses ────────────────────────────────────────
+
+    CityListResponse:
+      type: object
+      properties:
+        cities:
+          type: array
+          items:
+            $ref: '#/components/schemas/City'
+
+    MovieListResponse:
+      type: object
+      properties:
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movie'
+
+    MovieShowListResponse:
+      type: object
+      properties:
+        shows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TheatreShows'
+
+    TheatreListResponse:
+      type: object
+      properties:
+        theatres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Theatre'
+
+    # ── City ────────────────────────────────────────────────
+
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Mumbai"
+        state:
+          type: string
+          example: "Maharashtra"
+        country:
+          type: string
+          example: "India"
+
+    # ── Movie ───────────────────────────────────────────────
+
+    Movie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        title:
+          type: string
+          example: Pushpa 2
+        genre:
+          type: string
+          example: Action
+        duration:
+          type: integer
+          example: 180
+        rating:
+          type: integer
+          description: "Rating as a percentage (0-100)"
+          minimum: 0
+          maximum: 100
+          example: 84
+
+    MovieDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        title:
+          type: string
+          example: Pushpa 2
+        description:
+          type: string
+          example: Action thriller movie
+        genre:
+          type: string
+          example: Action
+        duration:
+          type: integer
+          example: 180
+        rating:
+          type: integer
+          description: "Rating as a percentage (0-100)"
+          minimum: 0
+          maximum: 100
+          example: 84
+        releaseDate:
+          type: string
+          format: date
+          example: 2026-02-20
+        releasedLanguages:
+          type: array
+          description: All languages this movie is released in
+          items:
+            type: string
+          example: [Hindi, Telugu, Tamil]
+        releasedFormats:
+          type: array
+          description: All formats this movie is released in
+          items:
+            type: string
+          example: [2D, 3D, IMAX]
+        cityLanguageFormats:
+          type: array
+          description: Languages and their available formats in the requested city. Null if no city was specified.
+          items:
+            $ref: '#/components/schemas/LanguageFormat'
+        cast:
+          type: array
+          items:
+            type: string
+          example: [Allu Arjun, Rashmika Mandanna]
+        director:
+          type: string
+          example: Sukumar
+        trailerUrl:
+          type: string
+          example: https://youtube.com/trailer
+        posterUrl:
+          type: string
+          example: https://cdn.movie.com/poster.jpg
+        availableInCity:
+          type: boolean
+          description: Whether the movie is currently running in the requested city. Null if no city was specified in the query.
+          example: true
+
+    # ── Show ────────────────────────────────────────────────
+
+    TheatreShows:
+      type: object
+      properties:
+        theatreId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        location:
+          type: string
+          example: Phoenix MarketCity, Velachery
+        showTimes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShowTime'
+
+    ShowTime:
+      type: object
+      properties:
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        startTime:
+          type: string
+          example: "10:00 AM"
+        language:
+          type: string
+          example: Hindi
+        format:
+          type: string
+          example: 2D
+        price:
+          type: number
+          format: decimal
+          example: 250.00
+        availableSeats:
+          type: integer
+          example: 120
+
+    ShowSeats:
+      type: object
+      properties:
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        movieTitle:
+          type: string
+          example: Pushpa 2
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        screen:
+          type: string
+          example: Screen 3
+        showTime:
+          type: string
+          format: local-date-time
+          example: "2025-02-15T10:00:00"
+        price:
+          type: number
+          format: decimal
+          example: 250.00
+        totalSeats:
+          type: integer
+          example: 150
+        availableSeats:
+          type: integer
+          example: 120
+        seatLayout:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatRow'
+
+    SeatRow:
+      type: object
+      properties:
+        rowLabel:
+          type: string
+          example: "A"
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Seat'
+
+    Seat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        seatNumber:
+          type: integer
+          example: 1
+        status:
+          type: string
+          enum: [AVAILABLE, BOOKED, BLOCKED]
+          example: AVAILABLE
+
+
+    # ── Theatre Shows Detail ─────────────────────────────────
+
+    TheatreShowsDetailResponse:
+      type: object
+      properties:
+        theatreId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        location:
+          type: string
+          example: Phoenix MarketCity, Velachery
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/MovieShows'
+
+    MovieShows:
+      type: object
+      properties:
+        movie:
+          $ref: '#/components/schemas/Movie'
+        languageFormats:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguageFormatShows'
+
+    LanguageFormatShows:
+      type: object
+      properties:
+        language:
+          type: string
+          example: Hindi
+        format:
+          type: string
+          example: 2D
+        shows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TheatreShowTime'
+
+    TheatreShowTime:
+      type: object
+      properties:
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        startTime:
+          type: string
+          example: "10:00 AM"
+        screen:
+          type: string
+          example: Screen 3
+        price:
+          type: number
+          format: decimal
+          example: 250.00
+        availableSeats:
+          type: integer
+          example: 120
+
+    # ── Language Format ─────────────────────────────────────
+
+    LanguageFormat:
+      type: object
+      properties:
+        language:
+          type: string
+          example: Hindi
+        formats:
+          type: array
+          items:
+            type: string
+          example: [2D, 3D, IMAX]
+
+    # ── Theatre ─────────────────────────────────────────────
+
+    Theatre:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        name:
+          type: string
+          example: PVR Cinemas
+        city:
+          type: string
+          example: Chennai
+        cityId:
+          type: integer
+          description: City ID this theatre belongs to
+          example: 1
+        location:
+          type: string
+          example: Phoenix MarketCity, Velachery
+        latitude:
+          type: number
+          format: double
+          example: 12.9716
+        longitude:
+          type: number
+          format: double
+          example: 77.5946
+        ownerId:
+          type: string
+          format: uuid
+          description: User ID of the theatre owner (ROLE_THEATRE_OWNER). Always present.
+          example: "00000000-0000-4000-d000-000000000001"
+
+    # ── Internal — Seat Lock/Release/Confirm ──────────────
+
+    SeatIdentifier:
+      type: object
+      required:
+        - rowLabel
+        - seatNumber
+      properties:
+        rowLabel:
+          type: string
+          example: "A"
+        seatNumber:
+          type: integer
+          example: 5
+
+    SeatLockRequest:
+      type: object
+      required:
+        - seats
+      properties:
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatIdentifier'
+          example:
+            - rowLabel: "A"
+              seatNumber: 5
+            - rowLabel: "A"
+              seatNumber: 6
+
+    SeatLockResponse:
+      type: object
+      properties:
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        screenName:
+          type: string
+          example: Screen 3
+        movieTitle:
+          type: string
+          example: Pushpa 2
+        showTime:
+          type: string
+          format: local-date-time
+          example: "2026-02-16T10:00:00"
+        price:
+          type: number
+          format: decimal
+          example: 250.00
+        lockedSeats:
+          type: array
+          items:
+            $ref: '#/components/schemas/LockedSeat'
+
+    LockedSeat:
+      type: object
+      properties:
+        showSeatId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        rowLabel:
+          type: string
+          example: "A"
+        seatNumber:
+          type: integer
+          example: 5
+
+    SeatStatusUpdateRequest:
+      type: object
+      required:
+        - showSeatIds
+      properties:
+        showSeatIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example: ["a1b2c3d4-e5f6-7890-abcd-ef1234567890"]
+
+    # ── Admin: Cities ───────────────────────────────────────
+
+    CityCreateRequest:
+      type: object
+      required:
+        - name
+        - state
+        - country
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Mumbai
+        state:
+          type: string
+          minLength: 1
+          example: Maharashtra
+        country:
+          type: string
+          minLength: 1
+          example: India
+        latitude:
+          type: number
+          format: double
+          example: 19.0760
+        longitude:
+          type: number
+          format: double
+          example: 72.8777
+
+    CityUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Mumbai
+        state:
+          type: string
+          minLength: 1
+          example: Maharashtra
+        country:
+          type: string
+          minLength: 1
+          example: India
+        latitude:
+          type: number
+          format: double
+          example: 19.0760
+        longitude:
+          type: number
+          format: double
+          example: 72.8777
+
+    # ── Languages ───────────────────────────────────────────
+
+    Language:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Hindi
+        code:
+          type: string
+          example: hi
+
+    LanguageListResponse:
+      type: object
+      properties:
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Language'
+
+    LanguageCreateRequest:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Hindi
+        code:
+          type: string
+          minLength: 1
+          maxLength: 8
+          description: ISO 639-1 / 639-2 language code
+          example: hi
+
+    LanguageUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Hindi
+        code:
+          type: string
+          minLength: 1
+          maxLength: 8
+          example: hi
+
+    # ── Formats ─────────────────────────────────────────────
+
+    Format:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 2D
+
+    FormatListResponse:
+      type: object
+      properties:
+        formats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Format'
+
+    FormatCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: IMAX
+
+    FormatUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: IMAX
+
+    # ── Admin: Movies ───────────────────────────────────────
+
+    MovieCreateRequest:
+      type: object
+      required:
+        - title
+        - durationMin
+        - genre
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: Pushpa 2
+        description:
+          type: string
+          example: Action thriller movie
+        durationMin:
+          type: integer
+          minimum: 1
+          example: 180
+        genre:
+          type: string
+          minLength: 1
+          example: Action
+        rating:
+          type: integer
+          description: Rating as a percentage (0-100)
+          minimum: 0
+          maximum: 100
+          example: 84
+        releaseDate:
+          type: string
+          format: date
+          example: 2026-02-20
+        posterUrl:
+          type: string
+          example: https://cdn.movie.com/poster.jpg
+        cast:
+          type: array
+          items:
+            type: string
+          example: [Allu Arjun, Rashmika Mandanna]
+        director:
+          type: string
+          example: Sukumar
+        trailerUrl:
+          type: string
+          example: https://youtube.com/trailer
+
+    MovieUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: Pushpa 2
+        description:
+          type: string
+          example: Action thriller movie
+        durationMin:
+          type: integer
+          minimum: 1
+          example: 180
+        genre:
+          type: string
+          minLength: 1
+          example: Action
+        rating:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 84
+        releaseDate:
+          type: string
+          format: date
+          example: 2026-02-20
+        posterUrl:
+          type: string
+          example: https://cdn.movie.com/poster.jpg
+        cast:
+          type: array
+          items:
+            type: string
+          example: [Allu Arjun, Rashmika Mandanna]
+        director:
+          type: string
+          example: Sukumar
+        trailerUrl:
+          type: string
+          example: https://youtube.com/trailer
+
+    # ── Admin: Movie ↔ Language/Format ──────────────────────
+
+    MovieLanguageFormat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        movieId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        languageId:
+          type: integer
+          example: 1
+        languageName:
+          type: string
+          example: Hindi
+        formatId:
+          type: integer
+          example: 2
+        formatName:
+          type: string
+          example: 3D
+
+    MovieLanguageFormatCreateRequest:
+      type: object
+      required:
+        - languageId
+        - formatId
+      properties:
+        languageId:
+          type: integer
+          minimum: 1
+          example: 1
+        formatId:
+          type: integer
+          minimum: 1
+          example: 2
+
+    # ── Admin: Theatres ─────────────────────────────────────
+
+    TheatreCreateRequest:
+      type: object
+      required:
+        - name
+        - cityId
+        - address
+        - ownerId
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: PVR Cinemas
+        cityId:
+          type: integer
+          minimum: 1
+          example: 1
+        address:
+          type: string
+          minLength: 1
+          example: Phoenix MarketCity, Velachery
+        latitude:
+          type: number
+          format: double
+          example: 12.9716
+        longitude:
+          type: number
+          format: double
+          example: 77.5946
+        ownerId:
+          type: string
+          format: uuid
+          description: User ID of the theatre owner (ROLE_THEATRE_OWNER). Required — every theatre must have an owner.
+          example: "00000000-0000-4000-d000-000000000001"
+
+    TheatreUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: PVR Cinemas
+        cityId:
+          type: integer
+          minimum: 1
+          example: 1
+        address:
+          type: string
+          minLength: 1
+          example: Phoenix MarketCity, Velachery
+        latitude:
+          type: number
+          format: double
+          example: 12.9716
+        longitude:
+          type: number
+          format: double
+          example: 77.5946
+        ownerId:
+          type: string
+          format: uuid
+          description: Reassign the theatre owner (admin-only). Must be a valid user UUID.
+          example: "00000000-0000-4000-d000-000000000001"
+
+    # ── Admin: Screens ──────────────────────────────────────
+
+    Screen:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        name:
+          type: string
+          example: Screen 3
+        theatreId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        formatId:
+          type: integer
+          example: 2
+        formatName:
+          type: string
+          example: 3D
+        totalSeats:
+          type: integer
+          example: 150
+
+    ScreenCreateRequest:
+      type: object
+      required:
+        - name
+        - formatId
+        - totalSeats
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Screen 3
+        formatId:
+          type: integer
+          minimum: 1
+          example: 2
+        totalSeats:
+          type: integer
+          minimum: 1
+          example: 150
+
+    ScreenUpdateRequest:
+      type: object
+      description: All fields optional; only provided fields are updated.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: Screen 3
+        formatId:
+          type: integer
+          minimum: 1
+          example: 2
+        totalSeats:
+          type: integer
+          minimum: 1
+          example: 150
+
+    # ── Admin: Seats (inventory) ────────────────────────────
+
+    TheatreSeat:
+      type: object
+      description: A physical seat on a screen (inventory-level, no booking status).
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        screenId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        rowLabel:
+          type: string
+          example: "A"
+        seatNumber:
+          type: integer
+          example: 5
+
+    SeatRowSpec:
+      type: object
+      description: Generates seats numbered 1..seatCount for the given row.
+      required:
+        - rowLabel
+        - seatCount
+      properties:
+        rowLabel:
+          type: string
+          minLength: 1
+          example: "A"
+        seatCount:
+          type: integer
+          minimum: 1
+          example: 15
+
+    SeatSpec:
+      type: object
+      description: Explicit seat at (rowLabel, seatNumber).
+      required:
+        - rowLabel
+        - seatNumber
+      properties:
+        rowLabel:
+          type: string
+          minLength: 1
+          example: "A"
+        seatNumber:
+          type: integer
+          minimum: 1
+          example: 5
+
+    SeatBulkCreateRequest:
+      type: object
+      description: >
+        Provide either `rows` (sequential numbering per row) or `seats`
+        (explicit pairs). Exactly one must be non-empty.
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatRowSpec'
+          example:
+            - rowLabel: "A"
+              seatCount: 15
+            - rowLabel: "B"
+              seatCount: 15
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatSpec'
+          example:
+            - rowLabel: "A"
+              seatNumber: 1
+            - rowLabel: "A"
+              seatNumber: 2
+
+    SeatListResponse:
+      type: object
+      properties:
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/TheatreSeat'
+
+    # ── Admin: Shows ────────────────────────────────────────
+
+    ShowCreateRequest:
+      type: object
+      required:
+        - mlfId
+        - screenId
+        - startTime
+        - price
+      properties:
+        mlfId:
+          type: string
+          format: uuid
+          description: ID of the movie-language-format combination
+          example: "00000000-0000-4000-c000-000000000001"
+        screenId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        startTime:
+          type: string
+          format: local-date-time
+          description: Show start time (must be in the future).
+          example: "2026-02-20T10:00:00"
+        endTime:
+          type: string
+          format: local-date-time
+          description: Optional. If absent, derived from movie.durationMin.
+          example: "2026-02-20T13:00:00"
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 250.00
+
+    ShowUpdateRequest:
+      type: object
+      description: All fields optional. Blocked if any seat is BOOKED.
+      properties:
+        mlfId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        screenId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        startTime:
+          type: string
+          format: local-date-time
+          example: "2026-02-20T10:00:00"
+        endTime:
+          type: string
+          format: local-date-time
+          example: "2026-02-20T13:00:00"
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          example: 300.00
+
+    ShowResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        mlfId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        screenId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-c000-000000000001"
+        screenName:
+          type: string
+          example: Screen 3
+        theatreId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-b000-000000000001"
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        movieId:
+          type: string
+          format: uuid
+          example: "00000000-0000-4000-a000-000000000001"
+        movieTitle:
+          type: string
+          example: Pushpa 2
+        language:
+          type: string
+          example: Hindi
+        format:
+          type: string
+          example: 2D
+        startTime:
+          type: string
+          format: local-date-time
+          example: "2026-02-20T10:00:00"
+        endTime:
+          type: string
+          format: local-date-time
+          example: "2026-02-20T13:00:00"
+        price:
+          type: number
+          format: decimal
+          example: 250.00
+        totalSeats:
+          type: integer
+          description: Number of show-seats auto-generated (one per screen seat).
+          example: 150

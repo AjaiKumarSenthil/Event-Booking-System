@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: inventory
+  jackson:
+    mapper:
+      sort-properties-alphabetically: false
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/bookmyshow}
+    username: ${DB_USERNAME:catalog}
+    password: ${DB_PASSWORD:catalog}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: inventory-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: com.bookmyshow.inventory.event,com.bookmyshow.booking.event
+        spring.json.value.default.type: com.bookmyshow.inventory.event.BookingEvent
+        spring.json.use.type.headers: false
+
+
+jwt:
+  public-key: classpath:keys/auth-public.pem
+
+server:
+  port: 8081
+  servlet:
+    context-path: /inventory/v1
+  error:
+    include-message: always

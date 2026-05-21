@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: BookYourShow - Booking API
+  description: REST APIs for managing booking operations in BookYourShow Application
+  version: 1.0.0
+  contact:
+    name: bookYourShow Team
+    email: bookyourshow@company.com
+
+tags:
+  - name: Bookings
+    description: Ticket booking operations
+  - name: Internal
+    description: Internal APIs — not exposed publicly. Called by other services (e.g., payment service).
+
+servers:
+  - url: http://localhost:8080/booking/v1
+    description: dev
+
+paths:
+  # ── Bookings ────────────────────────────────────────────
+
+  /bookings:
+    get:
+      tags: [Bookings]
+      summary: Get booking history for the authenticated user
+      description: >
+        Returns the booking history of the caller. The user is identified from the
+        Authorization JWT — there is no `userId` parameter, to prevent users from
+        querying other users' bookings.
+      operationId: getBookings
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          description: Authentication required
+        '500':
+          description: Internal server error
+    post:
+      tags: [Bookings]
+      summary: Start a booking by selecting seats for a show
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully with seats temporarily held
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid request (e.g., seats already booked)
+        '404':
+          description: Show not found
+        '409':
+          description: One or more selected seats are no longer available
+        '500':
+          description: Internal server error
+
+  /bookings/{bookingId}:
+    get:
+      tags: [Bookings]
+      summary: Get booking details by ID
+      operationId: getBookingDetails
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          description: Unique booking ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '401':
+          description: Authentication required
+        '403':
+          description: The caller does not own this booking
+        '404':
+          description: Booking not found
+        '500':
+          description: Internal server error
+
+  /bookings/{bookingId}/cancel:
+    post:
+      tags: [Bookings]
+      summary: Cancel a booking
+      operationId: cancelBooking
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          description: Unique booking ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Booking cannot be cancelled (e.g., show already started or booking already cancelled)
+        '401':
+          description: Authentication required
+        '403':
+          description: The caller does not own this booking
+        '404':
+          description: Booking not found
+        '500':
+          description: Internal server error
+
+  # ── Internal ────────────────────────────────────────────
+
+  /bookings/{bookingId}/confirm:
+    post:
+      tags: [Internal]
+      summary: Confirm a booking after successful payment
+      description: >
+        Internal API — called by the payment service after a successful payment webhook.
+        Not exposed to the frontend or public internet.
+      operationId: confirmBooking
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          description: Unique booking ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentConfirmation'
+      responses:
+        '200':
+          description: Booking confirmed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Booking cannot be confirmed (e.g., already cancelled or expired)
+        '401':
+          description: Authentication required
+        '403':
+          description: The caller does not own this booking
+        '404':
+          description: Booking not found
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+
+    # ── List Responses ────────────────────────────────────────
+
+    SeatIdentifier:
+      type: object
+      required:
+        - rowLabel
+        - seatNumber
+      properties:
+        rowLabel:
+          type: string
+          example: "A"
+        seatNumber:
+          type: integer
+          example: 5
+
+    BookingRequest:
+      type: object
+      required:
+        - showId
+        - seats
+      properties:
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatIdentifier'
+          example:
+            - rowLabel: "A"
+              seatNumber: 5
+            - rowLabel: "A"
+              seatNumber: 6
+    
+    BookingListResponse:
+      type: object
+      properties:
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingResponse'
+    
+    BookingResponse:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        showId:
+          type: string
+          format: uuid
+          example: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+        theatreName:
+          type: string
+          example: PVR Cinemas
+        screen:
+          type: string
+          example: Screen 3
+        movieTitle:
+          type: string
+          example: Pushpa 2
+        showTime:
+          type: string
+          example: "10:00 AM"
+        seats:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeatIdentifier'
+          example:
+            - rowLabel: "A"
+              seatNumber: 5
+            - rowLabel: "A"
+              seatNumber: 6
+        totalAmount:
+          type: number
+          format: double
+          example: 750.00
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED]
+          example: PENDING
+        expiresAt:
+          type: string
+          format: date-time
+          description: Seats are temporarily held until this time. Booking expires if payment is not completed.
+          example: "2026-02-18T15:10:00Z"
+
+    # ── Internal ───────────────────────────────────────────────
+
+    PaymentConfirmation:
+      type: object
+      required:
+        - paymentId
+        - paymentStatus
+      properties:
+        paymentId:
+          type: string
+          example: pay_901
+        paymentStatus:
+          type: string
+          enum: [SUCCESS]
+          example: SUCCESS
+        paymentMethod:
+          type: string
+          example: UPI
+        paidAt:
+          type: string
+          format: date-time
+          example: "2026-02-18T15:05:30Z"

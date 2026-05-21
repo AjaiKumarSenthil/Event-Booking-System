@@ -1,0 +1,84 @@
+# =============================================================
+# BookMyShow — root .gitignore
+# =============================================================
+
+# ── Build output ──────────────────────────────────────────────
+**/target/
+**/build/
+*.class
+*.jar
+*.war
+*.ear
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven helpers
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties.bak
+
+# ── Secrets / local config ────────────────────────────────────
+# Never commit private keys; public keys (*-public.pem) are fine.
+**/keys/*-private.pem
+**/keys/*private*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+
+# Env files (commit a .env.example template instead)
+.env
+.env.*
+!.env.example
+
+# ── Logs & runtime data ───────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node/
+node_modules/
+
+# ── IDE / editor ──────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+
+# Eclipse / STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ── OS junk ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Misc ──────────────────────────────────────────────────────
+HELP.md
+*.bak
+*.tmp
+
+# ── Internal docs (kept local only) ───────────────────────────
+# Detailed self-review / remediation notes — not intended to be public.
+REMEDIATION_PLAN.md
+

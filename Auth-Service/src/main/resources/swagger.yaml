@@ -1,0 +1,365 @@
+openapi: 3.0.3
+info:
+  title: BookYourShow - Auth API
+  description: REST APIs for authentication and authorization in BookYourShow Application
+  version: 1.0.0
+  contact:
+    name: bookYourShow Team
+    email: bookyourshow@company.com
+
+tags:
+  - name: Auth
+    description: Registration, login, and token operations
+  - name: Internal
+    description: Internal APIs — not exposed publicly. Called by other services (e.g., booking service).
+
+servers:
+  - url: http://localhost:8083/auth/v1
+    description: dev
+
+paths:
+
+  # ── Registration ────────────────────────────────────────
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '409':
+          description: Email already exists
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  # ── Login ───────────────────────────────────────────────
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user and return tokens
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid email or password
+        '500':
+          description: Internal server error
+
+  # ── Token Refresh ───────────────────────────────────────
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a refresh token for a new access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+        '500':
+          description: Internal server error
+
+  # ── Logout ──────────────────────────────────────────────
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke the refresh token (logout)
+      operationId: logout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Logged out successfully
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # ── Current User ────────────────────────────────────────
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user's profile
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  # ── Admin: Role assignment ─────────────────────────────
+
+  /auth/users/{userId}/roles:
+    post:
+      tags: [Auth]
+      summary: Assign a role to a user (admin only)
+      description: >
+        Promote an existing user to ROLE_ADMIN or ROLE_THEATRE_OWNER.
+        Without this endpoint, no one can become an admin after the first
+        seeded admin. Restricted to callers with ROLE_ADMIN.
+      operationId: assignRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: ID of the user to assign the role to
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+      responses:
+        '200':
+          description: Role assigned successfully; returns updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Invalid request (e.g., unknown role)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden — caller is not an admin
+        '404':
+          description: User not found
+        '409':
+          description: User already has the requested role
+        '500':
+          description: Internal server error
+
+  # ── Internal ───────────────────────────────────────────
+
+  /internal/users/{userId}:
+    get:
+      tags: [Internal]
+      summary: Get a user's contact info (email, full name) by id
+      description: >
+        Internal endpoint used by other services (e.g., Booking-Service)
+        to enrich domain events with user contact details. Not exposed
+        publicly via the API gateway.
+      operationId: getUserContact
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: User contact info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContactResponse'
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # ── Requests ──────────────────────────────────────────
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - fullName
+      properties:
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: MyStr0ngP@ss
+        fullName:
+          type: string
+          example: John Doe
+        phone:
+          type: string
+          example: "+919876543210"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          example: MyStr0ngP@ss
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    # ── Responses ─────────────────────────────────────────
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Access token validity in seconds
+          example: 1800
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        fullName:
+          type: string
+          example: John Doe
+        phone:
+          type: string
+          example: "+919876543210"
+        roles:
+          type: array
+          items:
+            type: string
+          example: [ROLE_USER]
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-04-12T10:30:00Z"
+
+    # ── Admin ─────────────────────────────────────────────
+
+    AssignRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          description: Role to assign to the user
+          enum:
+            - ROLE_ADMIN
+            - ROLE_THEATRE_OWNER
+            - ROLE_USER
+          example: ROLE_THEATRE_OWNER
+
+    # ── Internal ──────────────────────────────────────────
+
+    UserContactResponse:
+      type: object
+      required:
+        - id
+        - email
+        - fullName
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        fullName:
+          type: string
+          example: John Doe
