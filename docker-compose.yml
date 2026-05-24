@@ -52,5 +52,22 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    # Append-only persistence keeps seat-hold keys across container restarts in dev.
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - redis-data:/data
+
 volumes:
   kafka-data:
+  redis-data:

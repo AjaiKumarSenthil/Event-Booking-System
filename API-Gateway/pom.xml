@@ -41,6 +41,12 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
+		<!-- Reactive Redis client — backs Spring Cloud Gateway's RedisRateLimiter. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+		</dependency>
+
 		<!-- JWT (io.jsonwebtoken JJWT) -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
