@@ -72,7 +72,7 @@ public class BookingServiceImpl implements IBookingService {
             try {
                 inventoryClient.releaseSeats(request.getShowId(), seatIds);
             } catch (Exception releaseEx) {
-                log.error("Compensation failed; seats {} for show {} remain BLOCKED until expiry sweep: {}",
+                log.error("Compensation failed; Redis hold will auto-expire for seats {} on show {}: {}",
                         seatIds, request.getShowId(), releaseEx.getMessage(), releaseEx);
             }
             throw ex;

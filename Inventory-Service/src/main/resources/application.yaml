@@ -10,6 +10,11 @@ spring:
     password: ${DB_PASSWORD:catalog}
     driver-class-name: org.postgresql.Driver
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -33,6 +38,10 @@ spring:
 
 jwt:
   public-key: classpath:keys/auth-public.pem
+
+inventory:
+  seat-hold:
+    ttl-seconds: ${INVENTORY_SEAT_HOLD_TTL_SECONDS:600}
 
 server:
   port: 8081

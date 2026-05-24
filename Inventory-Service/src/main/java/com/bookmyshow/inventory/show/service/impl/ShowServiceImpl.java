@@ -13,6 +13,7 @@ import com.bookmyshow.inventory.show.mapper.MovieShowsMapper;
 import com.bookmyshow.inventory.show.mapper.ShowResponseMapper;
 import com.bookmyshow.inventory.show.mapper.ShowSeatMapper;
 import com.bookmyshow.inventory.show.mapper.TheatreShowsMapper;
+import com.bookmyshow.inventory.show.redis.SeatHoldRedisRepository;
 import com.bookmyshow.inventory.show.repository.ShowRepository;
 import com.bookmyshow.inventory.show.repository.ShowSeatRepository;
 import com.bookmyshow.inventory.show.service.IShowService;
@@ -44,6 +45,7 @@ public class ShowServiceImpl implements IShowService {
     private final ScreenRepository screenRepository;
     private final SeatRepository seatRepository;
     private final MovieLanguageFormatRepository movieLanguageFormatRepository;
+    private final SeatHoldRedisRepository seatHoldRedis;
 
     private final TheatreShowsMapper theatreShowsMapper;
     private final ShowSeatMapper showSeatMapper;
@@ -83,13 +85,20 @@ public class ShowServiceImpl implements IShowService {
 
         List<ShowSeat> showSeats = showSeatRepository.findAllByShowIdWithSeat(showId);
 
+
+        List<UUID> availableIds = showSeats.stream()
+                .filter(ss -> ss.getStatus() == SeatStatus.AVAILABLE)
+                .map(ShowSeat::getId)
+                .toList();
+        Set<UUID> held = seatHoldRedis.heldAmong(availableIds);
+
         List<SeatRow> seatRows = showSeats.stream()
                 .collect(Collectors.groupingBy(
                         ss -> ss.getSeat().getRowLabel(),
                         LinkedHashMap::new,
                         Collectors.toList()))
                 .entrySet().stream()
-                .map(entry -> showSeatMapper.toSeatRow(entry.getKey(), entry.getValue()))
+                .map(entry -> showSeatMapper.toSeatRow(entry.getKey(), entry.getValue(), held))
                 .toList();
 
         return showSeatMapper.toDto(show, seatRows);
@@ -126,6 +135,17 @@ public class ShowServiceImpl implements IShowService {
                 .movies(movieShowsList);
     }
 
+    /**
+     * Seat-hold protocol:
+     * <ol>
+     *   <li>Pessimistically lock the rows so a concurrent {@code confirmSeats}
+     *       cannot flip a seat to {@code BOOKED} between our read and our hold.</li>
+     *   <li>Reject if any seat is already {@code BOOKED} in Postgres.</li>
+     *   <li>Atomically reserve all seats in Redis (all-or-nothing via Lua).</li>
+     * </ol>
+     * Postgres is never written to here — the {@code AVAILABLE -> BLOCKED -> AVAILABLE}
+     * dance is gone, replaced by a Redis key whose TTL handles abandonment.
+     */
     @Override
     @Transactional
     public SeatLockResponse lockSeats(UUID showId, List<SeatIdentifier> seats) {
@@ -143,21 +163,22 @@ public class ShowServiceImpl implements IShowService {
             throw new ResourceNotFoundException("One or more seats do not exist for this show");
         }
 
-        List<ShowSeat> unavailable = showSeats.stream()
-                .filter(ss -> ss.getStatus() != SeatStatus.AVAILABLE)
+        List<ShowSeat> bookedAlready = showSeats.stream()
+                .filter(ss -> ss.getStatus() == SeatStatus.BOOKED)
                 .toList();
-
-        if (!unavailable.isEmpty()) {
-            List<String> labels = unavailable.stream()
-                    .map(ss -> ss.getSeat().getRowLabel() + "-" + ss.getSeat().getSeatNumber())
-                    .toList();
-            throw new SeatNotAvailableException("Seats not available: " + labels);
+        if (!bookedAlready.isEmpty()) {
+            throw new SeatNotAvailableException("Seats already booked: " + labelsOf(bookedAlready));
         }
 
-        showSeatRepository.updateStatusByIds(
-                showSeats.stream().map(ShowSeat::getId).toList(),
-                SeatStatus.BLOCKED
-        );
+        List<UUID> showSeatIds = showSeats.stream().map(ShowSeat::getId).toList();
+        if (!seatHoldRedis.tryHoldAll(showSeatIds)) {
+            // Re-query to give the caller a precise list of conflicting seats.
+            Set<UUID> held = seatHoldRedis.heldAmong(showSeatIds);
+            List<ShowSeat> conflicting = showSeats.stream()
+                    .filter(ss -> held.contains(ss.getId()))
+                    .toList();
+            throw new SeatNotAvailableException("Seats currently held: " + labelsOf(conflicting));
+        }
 
         List<LockedSeat> lockedSeats = showSeats.stream()
                 .map(ss -> new LockedSeat()
@@ -176,16 +197,34 @@ public class ShowServiceImpl implements IShowService {
                 .lockedSeats(lockedSeats);
     }
 
+    /**
+     * Release on cancellation. Always drops the Redis hold (no-op if already
+     * expired) and flips any {@code BOOKED} rows back to {@code AVAILABLE} so
+     * cancellations of confirmed bookings free their seats.
+     */
     @Override
     @Transactional
     public void releaseSeats(UUID showId, List<UUID> showSeatIds) {
+        seatHoldRedis.release(showSeatIds);
         showSeatRepository.updateStatusByIds(showSeatIds, SeatStatus.AVAILABLE);
     }
 
+    /**
+     * Promote a Redis hold into a permanent {@code BOOKED} row. DB is updated
+     * first so a concurrent {@code lockSeats} that wins the pessimistic lock
+     * after the DEL sees the booked status and refuses.
+     */
     @Override
     @Transactional
     public void confirmSeats(UUID showId, List<UUID> showSeatIds) {
         showSeatRepository.updateStatusByIds(showSeatIds, SeatStatus.BOOKED);
+        seatHoldRedis.release(showSeatIds);
+    }
+
+    private static List<String> labelsOf(List<ShowSeat> seats) {
+        return seats.stream()
+                .map(ss -> ss.getSeat().getRowLabel() + "-" + ss.getSeat().getSeatNumber())
+                .toList();
     }
 
     private List<Show> fetchShows(UUID movieId, Integer cityId, Integer langId,
