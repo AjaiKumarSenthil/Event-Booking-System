@@ -65,10 +65,15 @@ public class BookingServiceImpl implements IBookingService {
 
         try {
             // Short, focused transaction: just persist the booking aggregate.
-            return txTemplate.execute(status -> persistBooking(userId, userContact, lockResponse));
+            BookingResponse response = txTemplate.execute(status -> persistBooking(userId, userContact, lockResponse));
+            log.info("Booking created: bookingId={} userId={} showId={} seatCount={}",
+                    response.getBookingId(), userId, request.getShowId(), lockResponse.lockedSeats().size());
+            return response;
         } catch (Exception ex) {
             List<UUID> seatIds = lockResponse.lockedSeats().stream()
                     .map(LockedSeat::showSeatId).toList();
+            log.warn("Booking persist failed for userId={} showId={} — releasing {} held seats: {}",
+                    userId, request.getShowId(), seatIds.size(), ex.getMessage());
             try {
                 inventoryClient.releaseSeats(request.getShowId(), seatIds);
             } catch (Exception releaseEx) {
@@ -118,6 +123,7 @@ public class BookingServiceImpl implements IBookingService {
 
         if (booking.getStatus() != BookingStatus.PENDING
                 && booking.getStatus() != BookingStatus.CONFIRMED) {
+            log.warn("Cancel rejected: bookingId={} status={}", bookingId, booking.getStatus());
             throw new BookingNotAllowedException(
                     "Cannot cancel booking with status: " + booking.getStatus());
         }
@@ -133,6 +139,8 @@ public class BookingServiceImpl implements IBookingService {
         bookingEventProducer.publishBookingCancelled(
                 buildEvent(BookingEventType.BOOKING_CANCELLED, booking, showSeatIds));
 
+        log.info("Booking cancelled: bookingId={} showId={} seatCount={}",
+                bookingId, booking.getShowId(), showSeatIds.size());
         return bookingMapper.toResponse(booking);
     }
 
@@ -143,6 +151,7 @@ public class BookingServiceImpl implements IBookingService {
         assertCanAccess(booking);
 
         if (booking.getStatus() != BookingStatus.PENDING) {
+            log.warn("Confirm rejected: bookingId={} status={}", bookingId, booking.getStatus());
             throw new BookingNotAllowedException(
                     "Cannot confirm booking with status: " + booking.getStatus());
         }
@@ -160,6 +169,8 @@ public class BookingServiceImpl implements IBookingService {
         bookingEventProducer.publishBookingConfirmation(
                 buildEvent(BookingEventType.BOOKING_CONFIRMED, booking, showSeatIds));
 
+        log.info("Booking confirmed: bookingId={} showId={} paymentId={} seatCount={}",
+                bookingId, booking.getShowId(), confirmation.getPaymentId(), showSeatIds.size());
         return bookingMapper.toResponse(booking);
     }
 

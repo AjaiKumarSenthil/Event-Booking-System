@@ -9,6 +9,7 @@ import com.bookmyshow.booking.model.PaymentConfirmation;
 import com.bookmyshow.booking.service.IBookingService;
 import com.bookmyshow.jwt.AuthContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,6 +19,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
@@ -32,6 +34,8 @@ public class BookingController implements BookingsApi, InternalApi {
 
     @Override
     public ResponseEntity<BookingResponse> createBooking(BookingRequest bookingRequest) {
+        log.info("Create booking: userId={} showId={} seats={}",
+                AuthContext.getUserId(), bookingRequest.getShowId(), bookingRequest.getSeats().size());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(bookingService.createBooking(bookingRequest));
     }
@@ -49,6 +53,7 @@ public class BookingController implements BookingsApi, InternalApi {
 
     @Override
     public ResponseEntity<BookingResponse> cancelBooking(UUID bookingId) {
+        log.info("Cancel booking: bookingId={} userId={}", bookingId, AuthContext.getUserId());
         return ResponseEntity.ok(bookingService.cancelBooking(bookingId));
     }
 
@@ -57,6 +62,8 @@ public class BookingController implements BookingsApi, InternalApi {
                                                            PaymentConfirmation paymentConfirmation) {
         // TODO(security): once internal-service auth lands (see REMEDIATION_PLAN.md item #2),
         // allow the payment service to call this without the user-ownership check.
+        log.info("Confirm booking: bookingId={} userId={} paymentId={}",
+                bookingId, AuthContext.getUserId(), paymentConfirmation.getPaymentId());
         return ResponseEntity.ok(bookingService.confirmBooking(bookingId, paymentConfirmation));
     }
 }

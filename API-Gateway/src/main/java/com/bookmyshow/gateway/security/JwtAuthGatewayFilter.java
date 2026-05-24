@@ -69,11 +69,13 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
 
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.warn("Rejected request without Bearer token: {} {}", method, path.value());
             return unauthorized(exchange);
         }
 
         String token = authHeader.substring(7);
         if (!jwtUtil.validateToken(token)) {
+            log.warn("Rejected request with invalid JWT: {} {}", method, path.value());
             return unauthorized(exchange);
         }
 

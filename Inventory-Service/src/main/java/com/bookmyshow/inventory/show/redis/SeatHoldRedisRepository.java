@@ -60,13 +60,22 @@ public class SeatHoldRedisRepository {
             return true;
         }
         List<String> keys = toKeys(showSeatIds);
-        Long result = redis.execute(
-                holdScript,
-                keys,
-                String.valueOf(ttlSeconds),
-                HOLD_MARKER
-        );
-        return result != null && result == 1L;
+        Long result = null;
+        try {
+            result = redis.execute(
+                    holdScript,
+                    keys,
+                    String.valueOf(ttlSeconds),
+                    HOLD_MARKER
+            );
+        } catch (Exception ex) {
+            log.warn("Redis hold-seats Lua script failed for {} seats: {}",
+                    showSeatIds.size(), ex.getMessage(), ex);
+            throw ex;
+        }
+        boolean acquired = result != null && result == 1L;
+        log.debug("Redis hold attempt: seatCount={} acquired={}", showSeatIds.size(), acquired);
+        return acquired;
     }
 
     /** Remove hold keys. Idempotent; safe to call on already-expired keys. */
@@ -74,7 +83,8 @@ public class SeatHoldRedisRepository {
         if (showSeatIds == null || showSeatIds.isEmpty()) {
             return;
         }
-        redis.delete(toKeys(showSeatIds));
+        Long deleted = redis.delete(toKeys(showSeatIds));
+        log.debug("Redis hold release: requested={} deleted={}", showSeatIds.size(), deleted);
     }
 
     /**

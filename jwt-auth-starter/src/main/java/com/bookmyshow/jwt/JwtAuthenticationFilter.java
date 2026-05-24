@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -39,6 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var principal = new AuthPrincipal(userId, email);
                 var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("Authenticated request userId={} path={}", userId, request.getRequestURI());
+            } else {
+                log.warn("Rejected invalid/expired JWT on {} {}", request.getMethod(), request.getRequestURI());
             }
         }
 

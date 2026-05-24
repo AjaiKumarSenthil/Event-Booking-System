@@ -24,6 +24,7 @@ import com.bookmyshow.inventory.theatre.repository.ScreenRepository;
 import com.bookmyshow.inventory.theatre.repository.SeatRepository;
 import com.bookmyshow.inventory.theatre.repository.TheatreRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ShowServiceImpl implements IShowService {
@@ -160,6 +162,8 @@ public class ShowServiceImpl implements IShowService {
                 .findByShowIdAndSeatsForUpdate(showId, seatKeys);
 
         if (showSeats.size() != seats.size()) {
+            log.warn("Lock rejected: unknown seats. showId={} requested={} found={}",
+                    showId, seats.size(), showSeats.size());
             throw new ResourceNotFoundException("One or more seats do not exist for this show");
         }
 
@@ -167,6 +171,8 @@ public class ShowServiceImpl implements IShowService {
                 .filter(ss -> ss.getStatus() == SeatStatus.BOOKED)
                 .toList();
         if (!bookedAlready.isEmpty()) {
+            log.warn("Lock rejected: seats already booked. showId={} seats={}",
+                    showId, labelsOf(bookedAlready));
             throw new SeatNotAvailableException("Seats already booked: " + labelsOf(bookedAlready));
         }
 
@@ -177,6 +183,8 @@ public class ShowServiceImpl implements IShowService {
             List<ShowSeat> conflicting = showSeats.stream()
                     .filter(ss -> held.contains(ss.getId()))
                     .toList();
+            log.warn("Lock rejected: seats currently held in Redis. showId={} seats={}",
+                    showId, labelsOf(conflicting));
             throw new SeatNotAvailableException("Seats currently held: " + labelsOf(conflicting));
         }
 
@@ -187,6 +195,7 @@ public class ShowServiceImpl implements IShowService {
                         .seatNumber(ss.getSeat().getSeatNumber()))
                 .toList();
 
+        log.info("Seats locked: showId={} seatCount={}", showId, lockedSeats.size());
         return new SeatLockResponse()
                 .showId(show.getId())
                 .theatreName(show.getScreen().getTheatre().getName())
@@ -207,6 +216,7 @@ public class ShowServiceImpl implements IShowService {
     public void releaseSeats(UUID showId, List<UUID> showSeatIds) {
         seatHoldRedis.release(showSeatIds);
         showSeatRepository.updateStatusByIds(showSeatIds, SeatStatus.AVAILABLE);
+        log.info("Seats released: showId={} seatCount={}", showId, showSeatIds.size());
     }
 
     /**
@@ -219,6 +229,7 @@ public class ShowServiceImpl implements IShowService {
     public void confirmSeats(UUID showId, List<UUID> showSeatIds) {
         showSeatRepository.updateStatusByIds(showSeatIds, SeatStatus.BOOKED);
         seatHoldRedis.release(showSeatIds);
+        log.info("Seats confirmed (BOOKED): showId={} seatCount={}", showId, showSeatIds.size());
     }
 
     private static List<String> labelsOf(List<ShowSeat> seats) {

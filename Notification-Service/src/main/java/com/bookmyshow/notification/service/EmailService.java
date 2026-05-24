@@ -49,7 +49,16 @@ public class EmailService {
 
         log.info("Sending {} email to {} for booking {}",
                 event.getEventType(), event.getUserEmail(), event.getBookingId());
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+            log.info("Email sent: bookingId={} to={} type={}",
+                    event.getBookingId(), event.getUserEmail(), event.getEventType());
+        } catch (org.springframework.mail.MailException ex) {
+            log.error("Email send failed: bookingId={} to={} type={}: {}",
+                    event.getBookingId(), event.getUserEmail(),
+                    event.getEventType(), ex.getMessage(), ex);
+            throw ex;
+        }
     }
 
     private String renderTemplate(String templateName, BookingEvent event) {
