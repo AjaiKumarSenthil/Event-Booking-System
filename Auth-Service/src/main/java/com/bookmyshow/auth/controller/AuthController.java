@@ -10,8 +10,10 @@ import com.bookmyshow.auth.model.RegisterRequest;
 import com.bookmyshow.auth.model.UserProfile;
 import com.bookmyshow.auth.service.IAuthService;
 import com.bookmyshow.jwt.AuthContext;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class AuthController implements AuthApi {
 
     private final IAuthService authService;
+    private final HttpServletRequest httpServletRequest;
 
     @Override
     public ResponseEntity<UserProfile> register(RegisterRequest registerRequest) {
@@ -48,8 +51,16 @@ public class AuthController implements AuthApi {
     @Override
     public ResponseEntity<Void> logout(RefreshTokenRequest refreshTokenRequest) {
         log.info("Logout request received");
-        authService.logout(refreshTokenRequest.getRefreshToken());
+        authService.logout(refreshTokenRequest.getRefreshToken(), extractBearerToken());
         return ResponseEntity.ok().build();
+    }
+
+    private String extractBearerToken() {
+        String header = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 
     @Override

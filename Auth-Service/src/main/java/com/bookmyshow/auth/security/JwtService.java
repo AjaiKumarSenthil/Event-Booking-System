@@ -17,6 +17,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
@@ -52,6 +53,7 @@ public class JwtService {
                 .toList();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("roles", roles)
@@ -72,6 +74,16 @@ public class JwtService {
 
     public UUID getUserId(String token) {
         return UUID.fromString(parseClaims(token).getSubject());
+    }
+
+    /** Unique token id ({@code jti}) used to denylist a specific access token on logout. */
+    public String getJti(String token) {
+        return parseClaims(token).getId();
+    }
+
+    /** Instant at which the access token naturally expires; bounds the denylist entry TTL. */
+    public Instant getExpiration(String token) {
+        return parseClaims(token).getExpiration().toInstant();
     }
 
     public String getEmail(String token) {

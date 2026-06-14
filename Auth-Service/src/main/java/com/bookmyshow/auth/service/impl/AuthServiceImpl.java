@@ -17,6 +17,7 @@ import com.bookmyshow.auth.model.UserProfile;
 import com.bookmyshow.auth.repository.RoleRepository;
 import com.bookmyshow.auth.repository.UserRepository;
 import com.bookmyshow.auth.config.JwtProperties;
+import com.bookmyshow.auth.security.AccessTokenDenylist;
 import com.bookmyshow.auth.security.JwtService;
 import com.bookmyshow.auth.service.IAuthService;
 import com.bookmyshow.jwt.AuthContext;
@@ -44,6 +45,7 @@ public class AuthServiceImpl implements IAuthService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
+    private final AccessTokenDenylist accessTokenDenylist;
 
     @Override
     @Transactional
@@ -125,7 +127,7 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     @Transactional
-    public void logout(String refreshTokenValue) {
+    public void logout(String refreshTokenValue, String accessToken) {
         RefreshToken refreshToken = jwtService.findByToken(refreshTokenValue)
                 .orElseThrow(() -> {
                     log.warn("Logout failed: unknown refresh token");
@@ -133,6 +135,10 @@ public class AuthServiceImpl implements IAuthService {
                 });
 
         jwtService.revokeRefreshToken(refreshToken);
+        // Revoking the refresh token only stops new access tokens being minted; the
+        // already-issued access token stays valid until it expires. Denylist it so
+        // the gateway rejects it immediately.
+        accessTokenDenylist.denylist(accessToken);
         log.info("Logout successful userId={}", refreshToken.getUser().getId());
     }
 

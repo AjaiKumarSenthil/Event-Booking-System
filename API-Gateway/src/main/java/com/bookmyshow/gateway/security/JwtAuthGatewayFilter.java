@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,11 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
 
     private static final PathPatternParser PARSER = PathPatternParser.defaultInstance;
 
+    /** Must match {@code AccessTokenDenylist.KEY_PREFIX} in the Auth service. */
+    private static final String DENYLIST_KEY_PREFIX = "auth:denylist:access:";
+
     private final JwtUtil jwtUtil;
+    private final ReactiveStringRedisTemplate redis;
 
     @Value("${gateway.security.forbidden-patterns:}")
     private List<String> forbiddenPatternStrings;
@@ -79,7 +84,21 @@ public class JwtAuthGatewayFilter implements GlobalFilter, Ordered {
             return unauthorized(exchange);
         }
 
-        return chain.filter(exchange);
+        String jti = jwtUtil.getJti(token);
+        if (jti == null || jti.isBlank()) {
+            // Token predates the jti rollout — signature is still valid, so allow it.
+            return chain.filter(exchange);
+        }
+
+        return redis.hasKey(DENYLIST_KEY_PREFIX + jti)
+                .defaultIfEmpty(Boolean.FALSE)
+                .flatMap(denied -> {
+                    if (Boolean.TRUE.equals(denied)) {
+                        log.warn("Rejected denylisted (logged-out) JWT: {} {}", method, path.value());
+                        return unauthorized(exchange);
+                    }
+                    return chain.filter(exchange);
+                });
     }
 
     @Override

@@ -17,7 +17,7 @@ public interface IAuthService {
 
     AuthResponse refreshToken(String refreshToken);
 
-    void logout(String refreshToken);
+    void logout(String refreshToken, String accessToken);
 
     UserProfile getCurrentUser(UUID userId);
 

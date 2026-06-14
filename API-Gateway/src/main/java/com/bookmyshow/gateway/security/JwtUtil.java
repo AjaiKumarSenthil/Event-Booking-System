@@ -39,6 +39,10 @@ public class JwtUtil {
         return parseClaims(token).getSubject();
     }
 
+    public String getJti(String token) {
+        return parseClaims(token).getId();
+    }
+
     public String getEmail(String token) {
         return parseClaims(token).get("email", String.class);
     }

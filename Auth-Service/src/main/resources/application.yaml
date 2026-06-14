@@ -12,6 +12,11 @@ spring:
       ddl-auto: none
     show-sql: true
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
 jwt:
   private-key: ${JWT_PRIVATE_KEY:classpath:keys/auth-private.pem}
   public-key: ${JWT_PUBLIC_KEY:classpath:keys/auth-public.pem}
