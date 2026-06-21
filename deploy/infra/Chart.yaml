@@ -1,0 +1,22 @@
+apiVersion: v2
+name: infra
+description: Backing infrastructure (PostgreSQL, Redis, Kafka) for BookMyShow
+type: application
+version: 0.1.0
+appVersion: "1.0"
+
+# Bitnami subcharts. Versions use ranges so `helm dependency update` resolves the
+# latest matching entry from the repo index and pins it in Chart.lock.
+dependencies:
+  - name: postgresql
+    version: ">=15.0.0 <17.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: ">=20.0.0 <22.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: kafka
+    version: ">=31.0.0 <33.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled

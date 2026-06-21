@@ -1,0 +1,21 @@
+BookMyShow has been deployed (release: {{ .Release.Name }}, namespace: {{ .Release.Namespace }}).
+
+1. Watch the pods come up:
+   kubectl get pods -n {{ .Release.Namespace }} -w
+
+{{- if index .Values "api-gateway" "ingress" "enabled" }}
+
+2. Add the ingress host to your hosts file (point it at your ingress controller IP):
+   {{ index .Values "api-gateway" "ingress" "host" }}
+
+3. Reach the platform through the gateway, e.g.:
+   http://{{ index .Values "api-gateway" "ingress" "host" }}/auth/v1/...
+   http://{{ index .Values "api-gateway" "ingress" "host" }}/inventory/v1/...
+   http://{{ index .Values "api-gateway" "ingress" "host" }}/booking/v1/...
+{{- end }}
+
+{{- if .Values.infra.enabled }}
+
+NOTE: in-cluster Bitnami infra is enabled. To switch to managed/enterprise infra later:
+  --set infra.enabled=false  and point each service's database/redis/kafka block at the managed endpoints.
+{{- end }}

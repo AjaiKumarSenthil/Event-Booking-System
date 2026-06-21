@@ -1,0 +1,80 @@
+replicaCount: 1
+
+image:
+  # Registry/namespace comes from global.image.registry (set once for all services).
+  repository: bookmyshow-notification
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+
+# Notification is a Kafka/mail worker with no embedded web server:
+# no Service, no HTTP probes, no Ingress.
+service:
+  enabled: false
+  type: ClusterIP
+  port: 8084
+
+healthPath: /notification/v1/actuator/health
+
+probes:
+  liveness:
+    initialDelaySeconds: 40
+    periodSeconds: 15
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 6
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 320Mi
+  limits:
+    memory: 640Mi
+
+database:
+  enabled: true
+  host: infra-postgresql
+  port: 5432
+  name: bookmyshow
+  username: catalog
+  password: catalog
+
+redis:
+  enabled: false
+  host: infra-redis-master
+  port: 6379
+
+kafka:
+  enabled: true
+  bootstrapServers: infra-kafka:9092
+
+extraEnv: {}
+
+# Mail credentials (leave blank to disable real email sending in dev)
+secrets:
+  existingSecret: ""
+  extra:
+    MAIL_USERNAME: ""
+    MAIL_APP_PASSWORD: ""
+
+jwt:
+  enabled: false
+  mountPath: /etc/jwt
+  keyFileName: auth-private.pem
+  privateKey: ""
+  existingSecret: ""
+
+ingress:
+  enabled: false
+  className: nginx
+  host: bookmyshow.local
+  path: /
+  pathType: Prefix
+  annotations: {}
+  tls: []

@@ -1,0 +1,80 @@
+replicaCount: 1
+
+image:
+  # Registry/namespace comes from global.image.registry (set once for all services).
+  repository: bookmyshow-auth
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8083
+
+healthPath: /auth/v1/actuator/health
+
+probes:
+  liveness:
+    initialDelaySeconds: 40
+    periodSeconds: 15
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 6
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 384Mi
+  limits:
+    memory: 768Mi
+
+# ---- Infra connection blocks (defaults = in-cluster Bitnami; override for managed infra) ----
+database:
+  enabled: true
+  host: infra-postgresql
+  port: 5432
+  name: bookmyshow
+  username: catalog
+  password: catalog
+
+redis:
+  enabled: true
+  host: infra-redis-master
+  port: 6379
+
+kafka:
+  enabled: false
+  bootstrapServers: infra-kafka:9092
+
+# Plain (non-secret) env injected via ConfigMap
+extraEnv:
+  JWT_PRIVATE_KEY: file:/etc/jwt/auth-private.pem
+
+# Secret env (DB creds added automatically). Set existingSecret to use a managed secret instead.
+secrets:
+  existingSecret: ""
+  extra: {}
+
+# JWT signing key mounted as a file (auth only)
+jwt:
+  enabled: true
+  mountPath: /etc/jwt
+  keyFileName: auth-private.pem
+  privateKey: ""               # supply via: --set-file jwt.privateKey=./auth-private.pem
+  existingSecret: ""           # or reference a pre-created Secret holding auth-private.pem
+
+ingress:
+  enabled: false
+  className: nginx
+  host: bookmyshow.local
+  path: /
+  pathType: Prefix
+  annotations: {}
+  tls: []

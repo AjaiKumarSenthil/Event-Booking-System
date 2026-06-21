@@ -1,0 +1,34 @@
+apiVersion: v2
+name: bookmyshow
+description: Top-level chart deploying all BookMyShow services and (optionally) backing infra
+type: application
+version: 0.1.0
+appVersion: "0.0.1"
+
+# Each dependency points at an independently-installable chart via a relative path.
+# Override any subchart's values under its name, e.g. `auth.replicaCount`, `infra.kafka.enabled`.
+dependencies:
+  - name: infra
+    version: "0.1.0"
+    repository: "file://../infra"
+    condition: infra.enabled
+  - name: api-gateway
+    version: "0.1.0"
+    repository: "file://../../API-Gateway/deploy"
+    condition: api-gateway.enabled
+  - name: auth
+    version: "0.1.0"
+    repository: "file://../../Auth-Service/deploy"
+    condition: auth.enabled
+  - name: inventory
+    version: "0.1.0"
+    repository: "file://../../Inventory-Service/deploy"
+    condition: inventory.enabled
+  - name: booking
+    version: "0.1.0"
+    repository: "file://../../Booking-Service/deploy"
+    condition: booking.enabled
+  - name: notification
+    version: "0.1.0"
+    repository: "file://../../Notification-Service/deploy"
+    condition: notification.enabled

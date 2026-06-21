@@ -1,0 +1,78 @@
+replicaCount: 1
+
+image:
+  # Registry/namespace comes from global.image.registry (set once for all services).
+  repository: bookmyshow-booking
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8082
+
+healthPath: /booking/v1/actuator/health
+
+probes:
+  liveness:
+    initialDelaySeconds: 40
+    periodSeconds: 15
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 6
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 384Mi
+  limits:
+    memory: 768Mi
+
+database:
+  enabled: true
+  host: infra-postgresql
+  port: 5432
+  name: bookmyshow
+  username: catalog
+  password: catalog
+
+redis:
+  enabled: false
+  host: infra-redis-master
+  port: 6379
+
+kafka:
+  enabled: true
+  bootstrapServers: infra-kafka:9092
+
+# Booking calls inventory and auth over the cluster network
+extraEnv:
+  INVENTORY_BASE_URL: http://inventory:8081/inventory/v1
+  AUTH_BASE_URL: http://auth:8083/auth/v1
+
+secrets:
+  existingSecret: ""
+  extra: {}
+
+jwt:
+  enabled: false
+  mountPath: /etc/jwt
+  keyFileName: auth-private.pem
+  privateKey: ""
+  existingSecret: ""
+
+ingress:
+  enabled: false
+  className: nginx
+  host: bookmyshow.local
+  path: /
+  pathType: Prefix
+  annotations: {}
+  tls: []

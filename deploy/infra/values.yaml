@@ -1,0 +1,75 @@
+# Infra chart values.
+#
+global:
+  security:
+    allowInsecureImages: true
+
+# ----------------------------------------------------------------------------
+# PostgreSQL
+# ----------------------------------------------------------------------------
+postgresql:
+  enabled: true
+  # Stable service name regardless of release name -> infra-postgresql:5432
+  fullnameOverride: infra-postgresql
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/postgresql
+  architecture: standalone
+  auth:
+    username: catalog
+    password: catalog
+    database: bookmyshow
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+  metrics:
+    enabled: false
+
+# ----------------------------------------------------------------------------
+# Redis
+# ----------------------------------------------------------------------------
+redis:
+  enabled: true
+  # Master service -> infra-redis-master:6379
+  fullnameOverride: infra-redis
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/redis
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+  metrics:
+    enabled: false
+
+# ----------------------------------------------------------------------------
+# Kafka (KRaft, single node, PLAINTEXT for dev)
+# ----------------------------------------------------------------------------
+kafka:
+  enabled: true
+  # Bootstrap service -> infra-kafka:9092
+  fullnameOverride: infra-kafka
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/kafka
+  controller:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 2Gi
+  listeners:
+    client:
+      protocol: PLAINTEXT
+    controller:
+      protocol: PLAINTEXT
+    interbroker:
+      protocol: PLAINTEXT
+  sasl:
+    enabled: false
+  metrics:
+    jmx:
+      enabled: false

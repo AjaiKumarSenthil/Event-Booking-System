@@ -1,0 +1,54 @@
+# Example overrides for using managed/enterprise infra instead of in-cluster Bitnami.
+# Usage:
+#   helm upgrade --install bookmyshow deploy/bookmyshow -n bookmyshow \
+#     -f deploy/bookmyshow/values-managed-infra.example.yaml \
+#     --set-file auth.jwt.privateKey=./auth-private.pem
+
+# Turn off the bundled Bitnami subcharts
+infra:
+  enabled: false
+
+# Point every service at the managed endpoints. Prefer existingSecret for credentials
+# (created by your secret manager / External Secrets) instead of inline username/password.
+
+auth:
+  database:
+    host: my-postgres.rds.amazonaws.com
+    port: 5432
+    name: bookmyshow
+  redis:
+    host: my-redis.cache.amazonaws.com
+  secrets:
+    existingSecret: auth-db-credentials      # must contain DB_USERNAME, DB_PASSWORD
+  jwt:
+    existingSecret: auth-jwt-key             # must contain auth-private.pem
+
+inventory:
+  database:
+    host: my-postgres.rds.amazonaws.com
+  redis:
+    host: my-redis.cache.amazonaws.com
+  kafka:
+    bootstrapServers: my-broker.kafka.amazonaws.com:9092
+  secrets:
+    existingSecret: inventory-db-credentials
+
+booking:
+  database:
+    host: my-postgres.rds.amazonaws.com
+  kafka:
+    bootstrapServers: my-broker.kafka.amazonaws.com:9092
+  secrets:
+    existingSecret: booking-db-credentials
+
+notification:
+  database:
+    host: my-postgres.rds.amazonaws.com
+  kafka:
+    bootstrapServers: my-broker.kafka.amazonaws.com:9092
+  secrets:
+    existingSecret: notification-credentials  # DB_USERNAME, DB_PASSWORD, MAIL_USERNAME, MAIL_APP_PASSWORD
+
+api-gateway:
+  redis:
+    host: my-redis.cache.amazonaws.com

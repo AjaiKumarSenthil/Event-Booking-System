@@ -1,0 +1,48 @@
+# Top-level values. Each block configures the matching subchart.
+# Defaults deploy the full stack with in-cluster Bitnami infra.
+
+# Required by recent Bitnami charts when using the bitnamilegacy images (see infra chart).
+global:
+  # Registry/namespace for ALL service images, e.g. "docker.io/youruser/" (trailing slash).
+  # Empty = use local images. Override at deploy time with --set global.image.registry=...
+  image:
+    registry: ""
+  security:
+    allowInsecureImages: true
+
+# ---------------------------------------------------------------------------
+# Backing infra (PostgreSQL, Redis, Kafka).
+# Set infra.enabled=false to use managed/enterprise endpoints instead, then
+# point each service's database/redis/kafka block at the managed hosts below.
+# ---------------------------------------------------------------------------
+infra:
+  enabled: true
+
+# ---------------------------------------------------------------------------
+# Services (toggle individually if needed)
+# ---------------------------------------------------------------------------
+api-gateway:
+  enabled: true
+  ingress:
+    enabled: true
+    host: bookmyshow.local
+
+auth:
+  enabled: true
+  # Provide the RSA signing key with:
+  #   --set-file auth.jwt.privateKey=./auth-private.pem
+  jwt:
+    privateKey: ""
+
+inventory:
+  enabled: true
+
+booking:
+  enabled: true
+
+notification:
+  enabled: true
+  secrets:
+    extra:
+      MAIL_USERNAME: ""
+      MAIL_APP_PASSWORD: ""

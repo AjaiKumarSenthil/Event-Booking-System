@@ -13,7 +13,7 @@ spring:
         webflux:
           routes:
             - id: auth-service-public
-              uri: http://localhost:8083
+              uri: ${AUTH_SERVICE_URI:http://localhost:8083}
               predicates:
                 - Path=/auth/v1/auth/login,/auth/v1/auth/register,/auth/v1/auth/refresh
               filters:
@@ -25,17 +25,17 @@ spring:
                     key-resolver: "#{@ipKeyResolver}"
 
             - id: auth-service
-              uri: http://localhost:8083
+              uri: ${AUTH_SERVICE_URI:http://localhost:8083}
               predicates:
                 - Path=/auth/v1/**
 
             - id: inventory-service
-              uri: http://localhost:8081
+              uri: ${INVENTORY_SERVICE_URI:http://localhost:8081}
               predicates:
                 - Path=/inventory/v1/**
 
             - id: booking-service-create
-              uri: http://localhost:8082
+              uri: ${BOOKING_SERVICE_URI:http://localhost:8082}
               predicates:
                 - Path=/booking/v1/bookings
                 - Method=POST
@@ -48,7 +48,7 @@ spring:
                     key-resolver: "#{@userIdKeyResolver}"
 
             - id: booking-service
-              uri: http://localhost:8082
+              uri: ${BOOKING_SERVICE_URI:http://localhost:8082}
               predicates:
                 - Path=/booking/v1/**
 

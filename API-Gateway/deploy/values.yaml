@@ -1,0 +1,80 @@
+replicaCount: 1
+
+image:
+  # Registry/namespace comes from global.image.registry (set once for all services).
+  repository: bookmyshow-api-gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: 8080
+
+healthPath: /actuator/health
+
+probes:
+  liveness:
+    initialDelaySeconds: 40
+    periodSeconds: 15
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 6
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+
+database:
+  enabled: false
+  host: infra-postgresql
+  port: 5432
+  name: bookmyshow
+  username: catalog
+  password: catalog
+
+redis:
+  enabled: true
+  host: infra-redis-master
+  port: 6379
+
+kafka:
+  enabled: false
+  bootstrapServers: infra-kafka:9092
+
+# Downstream service URIs consumed by the gateway routes
+extraEnv:
+  AUTH_SERVICE_URI: http://auth:8083
+  INVENTORY_SERVICE_URI: http://inventory:8081
+  BOOKING_SERVICE_URI: http://booking:8082
+
+secrets:
+  existingSecret: ""
+  extra: {}
+
+jwt:
+  enabled: false
+  mountPath: /etc/jwt
+  keyFileName: auth-private.pem
+  privateKey: ""
+  existingSecret: ""
+
+# Single entry point: all external traffic enters through the gateway
+ingress:
+  enabled: true
+  className: nginx
+  host: bookmyshow.local
+  path: /
+  pathType: Prefix
+  annotations: {}
+  tls: []

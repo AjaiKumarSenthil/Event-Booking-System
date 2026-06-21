@@ -5,6 +5,11 @@
 # ── Build output ──────────────────────────────────────────────
 **/target/
 **/build/
+# Helm: packaged chart archives + resolved dependency subcharts
+**/dist/
+**/Chart.lock
+deploy/infra/charts/
+deploy/bookmyshow/charts/
 *.class
 *.jar
 *.war

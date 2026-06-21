@@ -28,6 +28,9 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<docker.registry></docker.registry>
+		<docker.image>bookmyshow-notification:latest</docker.image>
+		<docker-maven-plugin.version>0.48.1</docker-maven-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -106,6 +109,22 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>io.fabric8</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>${docker-maven-plugin.version}</version>
+				<configuration>
+					<images>
+						<image>
+							<name>${docker.registry}${docker.image}</name>
+							<build>
+								<contextDir>${project.basedir}</contextDir>
+								<dockerFile>deploy/Dockerfile</dockerFile>
+							</build>
+						</image>
+					</images>
 				</configuration>
 			</plugin>
 		</plugins>
